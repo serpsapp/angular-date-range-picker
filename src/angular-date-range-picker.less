@@ -3,15 +3,6 @@
     float: right;
     box-sizing: content-box;
 }
-.angular-date-range-picker__next-month {
-    right: 4px;
-}
-.angular-date-range-picker__prev-month {
-    left: 4px;
-}
-.angular-date-range-picker__prev-month:hover, .angular-date-range-picker__next-month:hover {
-    color: #571e93;
-}
 .angular-date-range-picker__prev-month, .angular-date-range-picker__next-month {
     position: absolute;
     top: 8px;
@@ -21,14 +12,12 @@
     cursor: pointer;
     text-align: center;
     font-weight: bold;
+    &:hover {
+        color: #571e93;
+    }
 }
 .angular-date-range-picker__prev-month { left: 16px; }
 .angular-date-range-picker__next-month { right: 16px; }
-.angular-date-range-picker__apply {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-}
 .angular-date-range-picker__input {
     border: 1px solid #ccc;
     padding: 5px 10px;
@@ -65,21 +54,27 @@
     text-align: center;
     cursor: pointer;
     padding: 0;
-}
-.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-disabled {
-    color: #ccc;
-}
-.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-selected {
-    color: #fff;
-    background: #571e93;
-}
-.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-disabled:hover {
-    color: #ccc;
-    background: #fff;
-}
-.angular-date-range-picker__calendar-day-start {
-    color: #fff;
-    background: #571e93;
+
+    &.angular-date-range-picker__calendar-day-disabled {
+        color: #ccc;
+    }
+    &.angular-date-range-picker__calendar-day-selected {
+        color: #fff;
+        background: #571e93;
+    }
+    .angular-date-range-picker__calendar-day-start {
+        color: #fff;
+        background: #571e93;
+    }
+
+    &:hover {
+        background: #000;
+        color: #fff;
+    }
+    &.angular-date-range-picker__calendar-day-disabled:hover {
+        color: #ccc;
+        background: #fff;
+    }
 }
 .angular-date-range-picker__month {
     width: 160px;
@@ -106,10 +101,6 @@
     height: 183px;
 }
 
-.angular-date-range-picker__calendar-day:hover {
-    background: #000;
-    color: #fff;
-}
 .angular-date-range-picker__month-name {
     text-align: center;
     background: #f8f8f8;
@@ -127,25 +118,22 @@
     cursor: pointer;
     outline: none;
     transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.1s ease-out;
+    &:hover {
+        background: #571e93;
+        color: #fff;
+    }
 }
 .angular-date-range-picker__cancel {
     padding: 0 8px;
     display: inline-block;
     color: #000;
     cursor: pointer;
+    text-decoration: none;
+    &:hover {
+        text-decoration: underline;
+    }
 }
 .angular-date-range-picker--ranged .angular-date-range-picker__buttons {
     position: absolute;
     bottom: 10px;
-}
-.angular-date-range-picker__apply:hover {
-    background: #571e93;
-    color: #fff;
-}
-.angular-date-range-picker__cancel:hover {
-    text-decoration: underline;
-}
-
-.angular-date-range-picker__cancel {
-    text-decoration: none;
 }
