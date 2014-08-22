@@ -139,8 +139,8 @@
                 for (i in _ref) {
                   if (!__hasProp.call(_ref, i)) continue;
                   cursel = _ref[i];
-                  if ($scope.start && parseInt(i) === $scope.cursel) {
-                    sel[$scope.cursel] = date === $scope.start;
+                  if ($scope.start && parseInt(i) === parseInt($scope.cursel)) {
+                    sel[i] = date.isSame($scope.start);
                     dis = date < $scope.start;
                   } else {
                     sel[i] = cursel && cursel.contains(date);

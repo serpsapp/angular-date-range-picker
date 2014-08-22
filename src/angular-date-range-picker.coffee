@@ -182,8 +182,8 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
         if $scope.showRanged
           for own i, cursel of $scope.selection
-            if $scope.start && parseInt(i) == $scope.cursel # Javascript doesn't actually have numeric keys...
-              sel[$scope.cursel] = date == $scope.start
+            if $scope.start && parseInt(i) == parseInt($scope.cursel) # Javascript doesn't actually have numeric keys...
+              sel[i] = date.isSame($scope.start)
               dis = date < $scope.start
             else
               sel[i] = cursel && cursel.contains(date)
