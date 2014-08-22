@@ -35,7 +35,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       <div ng-show="showRanged">
         Select range: <select ng-click="prevent_select($event)" ng-model="quick" ng-options="e.range as e.label for e in quickList"></select>
       </div>
-      <input type="checkbox" value="1" ng-model="cursel_pre" ng-true-value="1" ng-false-value="0"/> Compare to...
+      <input type="checkbox" value="1" ng-model="cursel" ng-true-value="1" ng-false-value="0"/> Compare to...
       <div class="angular-date-range-picker__buttons">
         <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
         <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
@@ -109,14 +109,12 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     $scope.range = null
     $scope.selecting = false
     $scope.visible = false
-    $scope.start = [null, null]
+    $scope.start = null
     $scope.cursel = 0
     $scope.selection = []
     # Backward compatibility - if $scope.ranged is not set in the html, it displays normal date range picker.
     $scope.showRanged = if $scope.ranged == undefined then true else $scope.ranged
     $scope.showCompare = if $scope.compare == undefined then true else $scope.compare
-    $scope.$watch 'cursel_pre', (cur, prev, scope) ->
-      scope.cursel = if cur then parseInt(cur) else 0
 
     _getModel = (index = 0) ->
       if $scope.showCompare
@@ -182,16 +180,16 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
         sel = []
         dis = false
 
-        for i, start of $scope.start
-          if $scope.showRanged
-            if start
-              sel[i] = date == start
-              dis = date < start if $scope.cursel == i
+        if $scope.showRanged
+          for own i, cursel of $scope.selection
+            if $scope.start && parseInt(i) == $scope.cursel # Javascript doesn't actually have numeric keys...
+              sel[$scope.cursel] = date == $scope.start
+              dis = date < $scope.start
             else
-              sel[i] = $scope.selection[i] && $scope.selection[i].contains(date)
-          else
-            sel[i] = date.isSame($scope.selection[i])
-            dis = moment().diff(date, 'days') > 0 if $scope.pastDates
+              sel[i] = cursel && cursel.contains(date)
+        else
+          sel[0] = date.isSame($scope.selection[0])
+          dis = moment().diff(date, 'days') > 0 if $scope.pastDates
 
         $scope.months[m] ||= {name: date.format("MMMM YYYY"), weeks: []}
         $scope.months[m].weeks[w] ||= []
@@ -199,7 +197,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           date:     date
           selected: sel
           disabled: dis
-          start:    ($scope.start[$scope.cursel] && $scope.start[$scope.cursel].unix() == date.unix())
+          start:    ($scope.start && $scope.start.unix() == date.unix())
 
       # Remove empty rows
       for m in $scope.months
@@ -218,7 +216,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     $scope.hide = ($event) ->
       $event?.stopPropagation?()
       $scope.visible = false
-      $scope.start = [null, null]
+      $scope.start = null
 
     $scope.prevent_select = ($event) ->
       $event?.stopPropagation?()
@@ -240,10 +238,10 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
         $scope.selecting = !$scope.selecting
 
         if $scope.selecting
-          $scope.start[$scope.cursel] = day.date
+          $scope.start = day.date
         else
-          $scope.selection[$scope.cursel] = moment().range($scope.start[$scope.cursel], day.date)
-          $scope.start[$scope.cursel] = null
+          $scope.selection[$scope.cursel] = moment().range($scope.start, day.date)
+          $scope.start = null
       else
         $scope.selection[$scope.cursel] = moment(day.date)
 
@@ -272,7 +270,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       return if !q || q == CUSTOM
       $scope.selection[$scope.cursel] = $scope.quick
       $scope.selecting = false
-      $scope.start[$scope.cursel] = null
+      $scope.start = null
       _calculateRange()
       _prepare()
 

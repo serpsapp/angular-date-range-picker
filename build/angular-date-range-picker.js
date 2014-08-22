@@ -1,10 +1,12 @@
 (function() {
+  var __hasProp = {}.hasOwnProperty;
+
   angular.module("dateRangePicker", ['pasvaz.bindonce']);
 
   angular.module("dateRangePicker").directive("dateRangePicker", [
     "$compile", "$timeout", function($compile, $timeout) {
       var CUSTOM, pickerTemplate;
-      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"checkbox\" value=\"1\" ng-model=\"cursel_pre\" ng-true-value=\"1\" ng-false-value=\"0\"/> Compare to...\n    <div class=\"angular-date-range-picker__buttons\">\n      <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n      <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n    </div>\n  </div>\n</div>";
+      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"checkbox\" value=\"1\" ng-model=\"cursel\" ng-true-value=\"1\" ng-false-value=\"0\"/> Compare to...\n    <div class=\"angular-date-range-picker__buttons\">\n      <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n      <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n    </div>\n  </div>\n</div>";
       CUSTOM = "CUSTOM";
       return {
         restrict: "AE",
@@ -44,14 +46,11 @@
           $scope.range = null;
           $scope.selecting = false;
           $scope.visible = false;
-          $scope.start = [null, null];
+          $scope.start = null;
           $scope.cursel = 0;
           $scope.selection = [];
           $scope.showRanged = $scope.ranged === void 0 ? true : $scope.ranged;
           $scope.showCompare = $scope.compare === void 0 ? true : $scope.compare;
-          $scope.$watch('cursel_pre', function(cur, prev, scope) {
-            return scope.cursel = cur ? parseInt(cur) : 0;
-          });
           _getModel = function(index) {
             if (index == null) {
               index = 0;
@@ -126,7 +125,7 @@
             startIndex = $scope.range.start.year() * 12 + $scope.range.start.month();
             startDay = moment().startOf("week").day();
             $scope.range.by("days", function(date) {
-              var d, dis, i, m, sel, start, w, _base, _base1, _ref;
+              var cursel, d, dis, i, m, sel, w, _base, _base1, _ref;
               d = date.day() - startDay;
               if (d < 0) {
                 d = 7 + d;
@@ -135,23 +134,22 @@
               w = parseInt((7 + date.date() - d) / 7);
               sel = [];
               dis = false;
-              _ref = $scope.start;
-              for (i in _ref) {
-                start = _ref[i];
-                if ($scope.showRanged) {
-                  if (start) {
-                    sel[i] = date === start;
-                    if ($scope.cursel === i) {
-                      dis = date < start;
-                    }
+              if ($scope.showRanged) {
+                _ref = $scope.selection;
+                for (i in _ref) {
+                  if (!__hasProp.call(_ref, i)) continue;
+                  cursel = _ref[i];
+                  if ($scope.start && parseInt(i) === $scope.cursel) {
+                    sel[$scope.cursel] = date === $scope.start;
+                    dis = date < $scope.start;
                   } else {
-                    sel[i] = $scope.selection[i] && $scope.selection[i].contains(date);
+                    sel[i] = cursel && cursel.contains(date);
                   }
-                } else {
-                  sel[i] = date.isSame($scope.selection[i]);
-                  if ($scope.pastDates) {
-                    dis = moment().diff(date, 'days') > 0;
-                  }
+                }
+              } else {
+                sel[0] = date.isSame($scope.selection[0]);
+                if ($scope.pastDates) {
+                  dis = moment().diff(date, 'days') > 0;
                 }
               }
               (_base = $scope.months)[m] || (_base[m] = {
@@ -163,7 +161,7 @@
                 date: date,
                 selected: sel,
                 disabled: dis,
-                start: $scope.start[$scope.cursel] && $scope.start[$scope.cursel].unix() === date.unix()
+                start: $scope.start && $scope.start.unix() === date.unix()
               };
             });
             _ref = $scope.months;
@@ -191,7 +189,7 @@
               }
             }
             $scope.visible = false;
-            return $scope.start = [null, null];
+            return $scope.start = null;
           };
           $scope.prevent_select = function($event) {
             return $event != null ? typeof $event.stopPropagation === "function" ? $event.stopPropagation() : void 0 : void 0;
@@ -224,10 +222,10 @@
             if ($scope.showRanged) {
               $scope.selecting = !$scope.selecting;
               if ($scope.selecting) {
-                $scope.start[$scope.cursel] = day.date;
+                $scope.start = day.date;
               } else {
-                $scope.selection[$scope.cursel] = moment().range($scope.start[$scope.cursel], day.date);
-                $scope.start[$scope.cursel] = null;
+                $scope.selection[$scope.cursel] = moment().range($scope.start, day.date);
+                $scope.start = null;
               }
             } else {
               $scope.selection[$scope.cursel] = moment(day.date);
@@ -257,7 +255,7 @@
             }
             $scope.selection[$scope.cursel] = $scope.quick;
             $scope.selecting = false;
-            $scope.start[$scope.cursel] = null;
+            $scope.start = null;
             _calculateRange();
             return _prepare();
           });
