@@ -82,9 +82,14 @@
   color: #ccc;
 }
 
-.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-selected {
+.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-selected-0 {
   color: #fff;
   background: #571e93;
+}
+
+.angular-date-range-picker__calendar-day.angular-date-range-picker__calendar-day-selected-1 {
+  color: #fff;
+  background: #b15600;
 }
 
 .angular-date-range-picker__calendar-day .angular-date-range-picker__calendar-day-start {

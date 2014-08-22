@@ -1,3 +1,4 @@
+# vim: set ts=2 sts=2 sw=2 :
 angular.module "dateRangePicker", ['pasvaz.bindonce']
 
 angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$timeout", ($compile, $timeout) ->
@@ -17,7 +18,8 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
             <td
                 bo-class='{
                   "angular-date-range-picker__calendar-day": day,
-                  "angular-date-range-picker__calendar-day-selected": day.selected,
+                  "angular-date-range-picker__calendar-day-selected-0": day.selected[0],
+                  "angular-date-range-picker__calendar-day-selected-1": day.selected[1],
                   "angular-date-range-picker__calendar-day-disabled": day.disabled,
                   "angular-date-range-picker__calendar-day-start": day.start
                 }'
@@ -33,6 +35,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       <div ng-show="showRanged">
         Select range: <select ng-click="prevent_select($event)" ng-model="quick" ng-options="e.range as e.label for e in quickList"></select>
       </div>
+      <input type="checkbox" value="1" ng-model="cursel_pre" ng-true-value="1" ng-false-value="0"/> Compare to...
       <div class="angular-date-range-picker__buttons">
         <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
         <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
@@ -106,9 +109,14 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     $scope.range = null
     $scope.selecting = false
     $scope.visible = false
-    $scope.start = null
+    $scope.start = [null, null]
+    $scope.cursel = 0
+    $scope.selection = []
     # Backward compatibility - if $scope.ranged is not set in the html, it displays normal date range picker.
     $scope.showRanged = if $scope.ranged == undefined then true else $scope.ranged
+    $scope.$watch 'cursel_pre', (cur, prev, scope) ->
+      scope.cursel = parseInt(cur)
+
 
     _makeQuickList = (includeCustom = false) ->
       return unless $scope.showRanged
@@ -119,8 +127,8 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     _calculateRange = () ->
       if $scope.showRanged
-        $scope.range = if $scope.selection
-          start = $scope.selection.start.clone().startOf("month").startOf("day")
+        $scope.range = if $scope.selection[$scope.cursel]
+          start = $scope.selection[$scope.cursel].start.clone().startOf("month").startOf("day")
           end = start.clone().add(2, "months").endOf("month").startOf("day")
           moment().range(start, end)
         else
@@ -129,8 +137,8 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
             moment().endOf("month").add(1, "month").startOf("day")
           )
       else
-        $scope.selection = false
-        $scope.selection = $scope.model || false
+        $scope.selection[$scope.cursel] = false
+        $scope.selection[$scope.cursel] = $scope.model || false
         $scope.date = moment($scope.model) || moment()
         $scope.range = moment().range(
           moment($scope.date).startOf("month"),
@@ -139,10 +147,10 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     _checkQuickList = () ->
       return unless $scope.showRanged
-      return unless $scope.selection
+      return unless $scope.selection[$scope.cursel]
       for e in $scope.quickList
-        if e.range != CUSTOM and $scope.selection.start.startOf("day").unix() == e.range.start.startOf("day").unix() and
-            $scope.selection.end.startOf("day").unix() == e.range.end.startOf("day").unix()
+        if e.range != CUSTOM and $scope.selection[$scope.cursel].start.startOf("day").unix() == e.range.start.startOf("day").unix() and
+            $scope.selection[$scope.cursel].end.startOf("day").unix() == e.range.end.startOf("day").unix()
           $scope.quick = e.range
           _makeQuickList()
           return
@@ -162,18 +170,19 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
         m = date.year()*12 + date.month() - startIndex
         w = parseInt((7 + date.date() - d) / 7)
 
-        sel = false
+        sel = []
         dis = false
 
-        if $scope.showRanged
-          if $scope.start
-            sel = date == $scope.start
-            dis = date < $scope.start
+        for i, start of $scope.start
+          if $scope.showRanged
+            if start
+              sel[i] = date == start
+              dis = date < start if $scope.cursel == i
+            else
+              sel[i] = $scope.selection[i] && $scope.selection[i].contains(date)
           else
-            sel = $scope.selection && $scope.selection.contains(date)
-        else
-          sel = date.isSame($scope.selection)
-          dis = moment().diff(date, 'days') > 0 if $scope.pastDates
+            sel[i] = date.isSame($scope.selection[i])
+            dis = moment().diff(date, 'days') > 0 if $scope.pastDates
 
         $scope.months[m] ||= {name: date.format("MMMM YYYY"), weeks: []}
         $scope.months[m].weeks[w] ||= []
@@ -181,7 +190,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           date:     date
           selected: sel
           disabled: dis
-          start:    ($scope.start && $scope.start.unix() == date.unix())
+          start:    ($scope.start[$scope.cursel] && $scope.start[$scope.cursel].unix() == date.unix())
 
       # Remove empty rows
       for m in $scope.months
@@ -191,7 +200,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       _checkQuickList()
 
     $scope.show = () ->
-      $scope.selection = $scope.model
+      $scope.selection[$scope.cursel] = $scope.model
       _calculateRange()
       _prepare()
       $scope.visible = true
@@ -199,7 +208,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     $scope.hide = ($event) ->
       $event?.stopPropagation?()
       $scope.visible = false
-      $scope.start = null
+      $scope.start = [null, null]
 
     $scope.prevent_select = ($event) ->
       $event?.stopPropagation?()
@@ -207,7 +216,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     $scope.ok = ($event) ->
       $event?.stopPropagation?()
-      $scope.model = $scope.selection
+      $scope.model = $scope.selection[$scope.cursel]
       $timeout -> $scope.callback() if $scope.callback
       $scope.hide()
 
@@ -219,12 +228,12 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
         $scope.selecting = !$scope.selecting
 
         if $scope.selecting
-          $scope.start = day.date
+          $scope.start[$scope.cursel] = day.date
         else
-          $scope.selection = moment().range($scope.start, day.date)
-          $scope.start = null
+          $scope.selection[$scope.cursel] = moment().range($scope.start[$scope.cursel], day.date)
+          $scope.start[$scope.cursel] = null
       else
-        $scope.selection = moment(day.date)
+        $scope.selection[$scope.cursel] = moment(day.date)
 
       _prepare()
 
@@ -249,9 +258,9 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     $scope.$watch "quick", (q, o) ->
       return if !q || q == CUSTOM
-      $scope.selection = $scope.quick
+      $scope.selection[$scope.cursel] = $scope.quick
       $scope.selecting = false
-      $scope.start = null
+      $scope.start[$scope.cursel] = null
       _calculateRange()
       _prepare()
 
