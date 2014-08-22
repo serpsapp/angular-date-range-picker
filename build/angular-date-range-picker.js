@@ -9,7 +9,7 @@
       return {
         restrict: "AE",
         replace: true,
-        template: "<span tabindex=\"0\" ng-keydown=\"hide()\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"!!model\">{{ model.start.format(\"ll\") }} - {{ model.end.format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"!!model\">{{ model.format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date</span>\n  </span>\n</span>",
+        template: "<span tabindex=\"0\" ng-keydown=\"hide()\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"!!model\">{{ model[0].start.format(\"ll\") }} - {{ model[0].end.format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"!!model\">{{ model[0].format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date</span>\n  </span>\n</span>",
         scope: {
           model: "=ngModel",
           customSelectOptions: "=",
@@ -18,7 +18,7 @@
           callback: "&"
         },
         link: function($scope, element, attrs) {
-          var documentClickFn, domEl, _calculateRange, _checkQuickList, _makeQuickList, _prepare;
+          var documentClickFn, domEl, _calculateRange, _checkQuickList, _getModel, _makeQuickList, _prepare;
           $scope.quickListDefinitions = $scope.customSelectOptions;
           if ($scope.quickListDefinitions == null) {
             $scope.quickListDefinitions = [
@@ -48,9 +48,23 @@
           $scope.cursel = 0;
           $scope.selection = [];
           $scope.showRanged = $scope.ranged === void 0 ? true : $scope.ranged;
+          $scope.showCompare = $scope.compare === void 0 ? true : $scope.compare;
           $scope.$watch('cursel_pre', function(cur, prev, scope) {
-            return scope.cursel = parseInt(cur);
+            return scope.cursel = cur ? parseInt(cur) : 0;
           });
+          _getModel = function(index) {
+            if (index == null) {
+              index = 0;
+            }
+            if ($scope.showCompare) {
+              if (!$scope.model) {
+                $scope.model = [];
+              }
+              return $scope.model[index];
+            } else {
+              return $scope.model;
+            }
+          };
           _makeQuickList = function(includeCustom) {
             var e, _i, _len, _ref, _results;
             if (includeCustom == null) {
@@ -75,13 +89,14 @@
             return _results;
           };
           _calculateRange = function() {
-            var end, start;
+            var end, model, start;
             if ($scope.showRanged) {
               return $scope.range = $scope.selection[$scope.cursel] ? (start = $scope.selection[$scope.cursel].start.clone().startOf("month").startOf("day"), end = start.clone().add(2, "months").endOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(1, "month").startOf("day"), moment().endOf("month").add(1, "month").startOf("day"));
             } else {
+              model = _getModel($scope.cursel);
               $scope.selection[$scope.cursel] = false;
-              $scope.selection[$scope.cursel] = $scope.model || false;
-              $scope.date = moment($scope.model) || moment();
+              $scope.selection[$scope.cursel] = model || false;
+              $scope.date = moment(model) || moment();
               return $scope.range = moment().range(moment($scope.date).startOf("month"), moment($scope.date).endOf("month"));
             }
           };
@@ -161,7 +176,10 @@
             return _checkQuickList();
           };
           $scope.show = function() {
-            $scope.selection[$scope.cursel] = $scope.model;
+            var i, _i;
+            for (i = _i = 0; _i <= 1; i = ++_i) {
+              $scope.selection[i] = _getModel(i);
+            }
             _calculateRange();
             _prepare();
             return $scope.visible = true;
@@ -184,7 +202,9 @@
                 $event.stopPropagation();
               }
             }
-            $scope.model = $scope.selection[$scope.cursel];
+            $scope.model = $scope.model || [];
+            $scope.model[0] = $scope.selection[0];
+            $scope.model[1] = $scope.selection[1];
             $timeout(function() {
               if ($scope.callback) {
                 return $scope.callback();
