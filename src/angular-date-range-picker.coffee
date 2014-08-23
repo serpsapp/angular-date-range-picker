@@ -35,14 +35,14 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       <div ng-show="showRanged">
         Select range: <select ng-click="prevent_select($event)" ng-model="quick" ng-options="e.range as e.label for e in quickList"></select>
       </div>
-      <input type="text" id="datebox_0_start" class="angular-date-range-picker__datebox" ng-blur="setDate($event,0,0)" placeholder="YYYY-MM-DD"/>
-      <input type="text" id="datebox_0_end" class="angular-date-range-picker__datebox" ng-blur="setDate($event,0,1)" placeholder="YYYY-MM-DD"/><br/>
+      <input type="text" id="datebox_0_start" class="angular-date-range-picker__datebox" ng-focus="cursel=0" ng-blur="setDate($event,0,0)" placeholder="YYYY-MM-DD"/>
+      <input type="text" id="datebox_0_end" class="angular-date-range-picker__datebox" ng-focus="cursel=0" ng-blur="setDate($event,0,1)" placeholder="YYYY-MM-DD"/><br/>
       <label class="angular-date-range-picker__comparelabel">
-        <input type="checkbox" value="1" ng-model="cursel" ng-true-value="1" ng-false-value="0"/> Compare to...</label>
+        <input type="checkbox" ng-model="showcomp" ng-true-value="1" ng-false-value="0" ng-change="flipCompare()"/> Compare to...</label>
       </label>
-      <div ng-show="cursel == 1">
-        <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
-        <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
+      <div ng-show="showcomp">
+        <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
+        <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
       </div>
       <div class="angular-date-range-picker__buttons">
         <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
@@ -119,6 +119,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     $scope.visible = false
     $scope.start = null
     $scope.cursel = 0
+    $scope.showcomp = false
     $scope.selection = []
     # Backward compatibility - if $scope.ranged is not set in the html, it displays normal date range picker.
     $scope.showRanged = if $scope.ranged == undefined then true else $scope.ranged
@@ -140,6 +141,9 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           $scope.selection[selnum] = moment().range(start, end)
 
         _prepare()
+
+    $scope.flipCompare = () ->
+      $scope.cursel = parseInt($scope.showcomp)
 
     $scope.$watchCollection 'selection', (cur, prev, scope) ->
       for i in [0..1]
