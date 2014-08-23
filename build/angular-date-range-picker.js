@@ -6,12 +6,12 @@
   angular.module("dateRangePicker").directive("dateRangePicker", [
     "$compile", "$timeout", function($compile, $timeout) {
       var CUSTOM, pickerTemplate;
-      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"checkbox\" value=\"1\" ng-model=\"cursel\" ng-true-value=\"1\" ng-false-value=\"0\"/> Compare to...\n    <div class=\"angular-date-range-picker__buttons\">\n      <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n      <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n    </div>\n  </div>\n</div>";
+      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"text\" id=\"datebox_0_start\" class=\"angular-date-range-picker__datebox\" ng-blur=\"setDate($event,0,0)\" placeholder=\"YYYY-MM-DD\"/>\n    <input type=\"text\" id=\"datebox_0_end\" class=\"angular-date-range-picker__datebox\" ng-blur=\"setDate($event,0,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n    <label class=\"angular-date-range-picker__comparelabel\">\n      <input type=\"checkbox\" value=\"1\" ng-model=\"cursel\" ng-true-value=\"1\" ng-false-value=\"0\"/> Compare to...</label>\n    </label>\n    <div ng-show=\"cursel == 1\">\n      <input type=\"text\" id=\"datebox_1_start\" class=\"angular-date-range-picker__datebox\" ng-blur=\"setDate($event,1,0)\" placeholder=\"YYYY-MM-DD\"/>\n      <input type=\"text\" id=\"datebox_1_end\" class=\"angular-date-range-picker__datebox\" ng-blur=\"setDate($event,1,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n    </div>\n    <div class=\"angular-date-range-picker__buttons\">\n      <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n      <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n    </div>\n  </div>\n</div>";
       CUSTOM = "CUSTOM";
       return {
         restrict: "AE",
         replace: true,
-        template: "<span tabindex=\"0\" ng-keydown=\"hide()\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"!!model\">{{ model[0].start.format(\"ll\") }} - {{ model[0].end.format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"!!model\">{{ model[0].format(\"ll\") }}</span>\n    <span ng-hide=\"!!model\">Select date</span>\n  </span>\n</span>",
+        template: "<span tabindex=\"0\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"model && model.0\">{{ model.0.start.format(\"ll\") }} - {{ model.0.end.format(\"ll\") }}</span>\n    <span ng-hide=\"model && model.0\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"model && model.0\">{{ model.0.format(\"ll\") }}</span>\n    <span ng-hide=\"model && model.0\">Select date</span>\n  </span>\n</span>",
         scope: {
           model: "=ngModel",
           customSelectOptions: "=",
@@ -51,6 +51,42 @@
           $scope.selection = [];
           $scope.showRanged = $scope.ranged === void 0 ? true : $scope.ranged;
           $scope.showCompare = $scope.compare === void 0 ? true : $scope.compare;
+          $scope.setDate = function(evt, selnum, isend) {
+            var end, newdate, start;
+            newdate = moment(evt.target.value, ['YYYY-MM-DD', 'MM/DD/YY', 'MM/DD/YYYY']);
+            if (newdate.isValid()) {
+              if ($scope.selection[selnum]) {
+                if (isend) {
+                  $scope.selection[selnum].end = newdate;
+                } else {
+                  $scope.selection[selnum].start = newdate;
+                }
+              } else {
+                start = newdate.clone();
+                end = newdate.clone();
+                if (isend) {
+                  start.add('d', -1);
+                } else {
+                  end.add('d', 1);
+                }
+                $scope.selection[selnum] = moment().range(start, end);
+              }
+              return _prepare();
+            }
+          };
+          $scope.$watchCollection('selection', function(cur, prev, scope) {
+            var i, _i, _results;
+            _results = [];
+            for (i = _i = 0; _i <= 1; i = ++_i) {
+              if (cur && cur[i]) {
+                document.getElementById("datebox_" + i + "_start").value = cur[i].start.format('YYYY-MM-DD');
+                _results.push(document.getElementById("datebox_" + i + "_end").value = cur[i].end.format('YYYY-MM-DD'));
+              } else {
+                _results.push(void 0);
+              }
+            }
+            return _results;
+          });
           _getModel = function(index) {
             if (index == null) {
               index = 0;

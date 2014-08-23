@@ -35,7 +35,15 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       <div ng-show="showRanged">
         Select range: <select ng-click="prevent_select($event)" ng-model="quick" ng-options="e.range as e.label for e in quickList"></select>
       </div>
-      <input type="checkbox" value="1" ng-model="cursel" ng-true-value="1" ng-false-value="0"/> Compare to...
+      <input type="text" id="datebox_0_start" class="angular-date-range-picker__datebox" ng-blur="setDate($event,0,0)" placeholder="YYYY-MM-DD"/>
+      <input type="text" id="datebox_0_end" class="angular-date-range-picker__datebox" ng-blur="setDate($event,0,1)" placeholder="YYYY-MM-DD"/><br/>
+      <label class="angular-date-range-picker__comparelabel">
+        <input type="checkbox" value="1" ng-model="cursel" ng-true-value="1" ng-false-value="0"/> Compare to...</label>
+      </label>
+      <div ng-show="cursel == 1">
+        <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
+        <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
+      </div>
       <div class="angular-date-range-picker__buttons">
         <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
         <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
@@ -48,14 +56,14 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
   restrict: "AE"
   replace: true
   template: """
-  <span tabindex="0" ng-keydown="hide()" class="angular-date-range-picker__input">
+  <span tabindex="0" class="angular-date-range-picker__input">
     <span ng-if="showRanged">
-      <span ng-show="!!model">{{ model[0].start.format("ll") }} - {{ model[0].end.format("ll") }}</span>
-      <span ng-hide="!!model">Select date range</span>
+      <span ng-show="model && model.0">{{ model.0.start.format("ll") }} - {{ model.0.end.format("ll") }}</span>
+      <span ng-hide="model && model.0">Select date range</span>
     </span>
     <span ng-if="!showRanged">
-      <span ng-show="!!model">{{ model[0].format("ll") }}</span>
-      <span ng-hide="!!model">Select date</span>
+      <span ng-show="model && model.0">{{ model.0.format("ll") }}</span>
+      <span ng-hide="model && model.0">Select date</span>
     </span>
   </span>
   """
@@ -115,6 +123,29 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     # Backward compatibility - if $scope.ranged is not set in the html, it displays normal date range picker.
     $scope.showRanged = if $scope.ranged == undefined then true else $scope.ranged
     $scope.showCompare = if $scope.compare == undefined then true else $scope.compare
+    
+    $scope.setDate = (evt, selnum, isend) ->
+      newdate = moment(evt.target.value, ['YYYY-MM-DD', 'MM/DD/YY', 'MM/DD/YYYY'])
+      if newdate.isValid()
+        if $scope.selection[selnum]
+          if isend
+            $scope.selection[selnum].end = newdate
+          else
+            $scope.selection[selnum].start = newdate
+        else
+          start = newdate.clone()
+          end = newdate.clone()
+          if isend then start.add('d',-1) else end.add('d',1)
+
+          $scope.selection[selnum] = moment().range(start, end)
+
+        _prepare()
+
+    $scope.$watchCollection 'selection', (cur, prev, scope) ->
+      for i in [0..1]
+        if cur && cur[i]
+            document.getElementById("datebox_#{i}_start").value = cur[i].start.format('YYYY-MM-DD')
+            document.getElementById("datebox_#{i}_end").value = cur[i].end.format('YYYY-MM-DD')
 
     _getModel = (index = 0) ->
       if $scope.showCompare
