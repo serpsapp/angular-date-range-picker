@@ -17,6 +17,7 @@
           customSelectOptions: "=",
           ranged: "=",
           pastDates: "@",
+          noFutureDates: "@",
           callback: "&"
         },
         link: function($scope, element, attrs) {
@@ -128,13 +129,18 @@
             return _results;
           };
           _calculateRange = function() {
-            var end, model, start;
+            var end, model, start, totalSelection;
             if ($scope.showRanged) {
-              return $scope.range = $scope.selection[$scope.cursel] ? (start = $scope.selection[$scope.cursel].start.clone().startOf("month").startOf("day"), end = start.clone().add(2, "months").endOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(1, "month").startOf("day"), moment().endOf("month").add(1, "month").startOf("day"));
+              totalSelection = $scope.showCompare && $scope.selection && $scope.selection[1] ? moment().range(Math.min($scope.selection[0].start, $scope.selection[1].start), Math.max($scope.selection[0].end, $scope.selection[1].end)) : $scope.selection && $scope.selection[0] ? $scope.selection[0] : false;
+              if ($scope.noFutureDates != null) {
+                return $scope.range = totalSelection ? (end = totalSelection.end.clone().endOf("month").startOf("day"), start = end.clone().subtract(2, "months").startOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(2, "month").startOf("day"), moment().endOf("month").startOf("day"));
+              } else {
+                return $scope.range = $scope.selection && $scope.selection[0] ? (start = $scope.selection[0].start.clone().startOf("month").startOf("day"), end = start.clone().add(2, "months").endOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(1, "month").startOf("day"), moment().endOf("month").add(1, "month").startOf("day"));
+              }
             } else {
-              model = _getModel($scope.cursel);
-              $scope.selection[$scope.cursel] = false;
-              $scope.selection[$scope.cursel] = model || false;
+              model = _getModel(0);
+              $scope.selection[0] = false;
+              $scope.selection[0] = model || false;
               $scope.date = moment(model) || moment();
               return $scope.range = moment().range(moment($scope.date).startOf("month"), moment($scope.date).endOf("month"));
             }
@@ -192,6 +198,9 @@
                   dis = moment().diff(date, 'days') > 0;
                 }
               }
+              if ($scope.noFutureDates != null) {
+                dis = dis || moment().diff(date, 'days') < 0;
+              }
               (_base = $scope.months)[m] || (_base[m] = {
                 name: date.format("MMMM YYYY"),
                 weeks: []
@@ -214,9 +223,12 @@
             return _checkQuickList();
           };
           $scope.show = function() {
-            var i, _i;
-            for (i = _i = 0; _i <= 1; i = ++_i) {
-              $scope.selection[i] = _getModel(i);
+            if ($scope.showCompare) {
+              $scope.selection[0] = $scope.model[0];
+              $scope.selection[1] = $scope.model[1];
+            } else {
+              $scope.selection[0] = $scope.model;
+              $scope.selection[1] = void 0;
             }
             _calculateRange();
             _prepare();
@@ -241,8 +253,12 @@
               }
             }
             $scope.model = $scope.model || [];
-            $scope.model[0] = $scope.selection[0];
-            $scope.model[1] = $scope.selection[1];
+            if ($scope.showCompare) {
+              $scope.model[0] = $scope.selection[0];
+              $scope.model[1] = $scope.selection[1];
+            } else {
+              $scope.model = $scope.selection[0];
+            }
             $timeout(function() {
               if ($scope.callback) {
                 return $scope.callback();
