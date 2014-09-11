@@ -37,16 +37,18 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       </div>
       <input type="text" id="datebox_0_start" class="angular-date-range-picker__datebox" ng-focus="cursel=0" ng-blur="setDate($event,0,0)" placeholder="YYYY-MM-DD"/>
       <input type="text" id="datebox_0_end" class="angular-date-range-picker__datebox" ng-focus="cursel=0" ng-blur="setDate($event,0,1)" placeholder="YYYY-MM-DD"/><br/>
-      <label class="angular-date-range-picker__comparelabel">
-        <input type="checkbox" ng-model="showcomp" ng-true-value="1" ng-false-value="0" ng-change="flipCompare()"/> Compare to...</label>
-      </label>
-      <div ng-show="showcomp">
-        <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
-        <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
-      </div>
-      <div class="angular-date-range-picker__buttons">
-        <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
-        <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
+      <div ng-if="showCompare">
+        <label class="angular-date-range-picker__comparelabel">
+          <input type="checkbox" ng-model="showcomp" ng-true-value="1" ng-false-value="0" ng-change="flipCompare()"/> Compare to...</label>
+        </label>
+        <div ng-show="showcomp">
+          <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
+          <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
+        </div>
+        <div class="angular-date-range-picker__buttons">
+          <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
+          <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
+        </div>
       </div>
     </div>
   </div>
@@ -58,12 +60,12 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
   template: """
   <span tabindex="0" class="angular-date-range-picker__input">
     <span ng-if="showRanged">
-      <span ng-show="model && model.0">{{ model.0.start.format("ll") }} - {{ model.0.end.format("ll") }}</span>
-      <span ng-hide="model && model.0">Select date range</span>
+      <span ng-show="selection && selection.0">{{ selection.0.start.format("ll") }} - {{ selection.0.end.format("ll") }}</span>
+      <span ng-hide="selection && selection.0">Select date range</span>
     </span>
     <span ng-if="!showRanged">
-      <span ng-show="model && model.0">{{ model.0.format("ll") }}</span>
-      <span ng-hide="model && model.0">Select date</span>
+      <span ng-show="selection && selection.0">{{ selection.0.format("ll") }}</span>
+      <span ng-hide="selection && selection.0">Select date</span>
     </span>
   </span>
   """
@@ -71,6 +73,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     model: "=ngModel" # can't use ngModelController, we need isolated scope
     customSelectOptions: "="
     ranged: "="
+    compare: "="
     pastDates: "@"
     noFutureDates: "@"
     callback: "&"
@@ -160,6 +163,21 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       else
         return $scope.model
 
+    _setSelectionFromModel = () ->
+      if $scope.showCompare
+        $scope.selection[0] = $scope.model[0]
+        $scope.selection[1] = $scope.model[1]
+      else
+        $scope.selection = [$scope.model]
+
+    _setModelFromSelection = () ->
+      if $scope.showCompare
+        $scope.model = $scope.model || []
+        $scope.model[0] = $scope.selection[0]
+        $scope.model[1] = $scope.selection[1]
+      else
+        $scope.model = $scope.selection[0]
+
     _makeQuickList = (includeCustom = false) ->
       return unless $scope.showRanged
       $scope.quickList = []
@@ -169,6 +187,10 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     _calculateRange = () ->
       if $scope.showRanged
+        # Ensure we have the model in selection
+        if !$scope.selection || !$scope.selection[0]
+          _setSelectionFromModel()
+
         totalSelection = if $scope.showCompare && $scope.selection && $scope.selection[1]
           moment().range(
             Math.min($scope.selection[0].start, $scope.selection[1].start),
@@ -250,7 +272,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           dis = moment().diff(date, 'days') > 0 if $scope.pastDates
 
         if $scope.noFutureDates?
-          dis = dis || moment().diff(date, 'days') < 0
+          dis = dis || moment().startOf('day').diff(date, 'days') < 0
 
         $scope.months[m] ||= {name: date.format("MMMM YYYY"), weeks: []}
         $scope.months[m].weeks[w] ||= []
@@ -268,12 +290,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       _checkQuickList()
 
     $scope.show = () ->
-      if $scope.showCompare
-        $scope.selection[0] = $scope.model[0]
-        $scope.selection[1] = $scope.model[1]
-      else
-        $scope.selection[0] = $scope.model
-        $scope.selection[1] = undefined
+      _setSelectionFromModel()
       _calculateRange()
       _prepare()
       $scope.visible = true
@@ -288,12 +305,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
 
     $scope.ok = ($event) ->
       $event?.stopPropagation?()
-      $scope.model = $scope.model || []
-      if $scope.showCompare
-        $scope.model[0] = $scope.selection[0]
-        $scope.model[1] = $scope.selection[1]
-      else
-        $scope.model = $scope.selection[0]
+      _setModelFromSelection()
       $timeout -> $scope.callback() if $scope.callback
       $scope.hide()
 

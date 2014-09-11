@@ -6,22 +6,23 @@
   angular.module("dateRangePicker").directive("dateRangePicker", [
     "$compile", "$timeout", function($compile, $timeout) {
       var CUSTOM, pickerTemplate;
-      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"text\" id=\"datebox_0_start\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=0\" ng-blur=\"setDate($event,0,0)\" placeholder=\"YYYY-MM-DD\"/>\n    <input type=\"text\" id=\"datebox_0_end\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=0\" ng-blur=\"setDate($event,0,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n    <label class=\"angular-date-range-picker__comparelabel\">\n      <input type=\"checkbox\" ng-model=\"showcomp\" ng-true-value=\"1\" ng-false-value=\"0\" ng-change=\"flipCompare()\"/> Compare to...</label>\n    </label>\n    <div ng-show=\"showcomp\">\n      <input type=\"text\" id=\"datebox_1_start\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=1\" ng-blur=\"setDate($event,1,0)\" placeholder=\"YYYY-MM-DD\"/>\n      <input type=\"text\" id=\"datebox_1_end\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=1\" ng-blur=\"setDate($event,1,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n    </div>\n    <div class=\"angular-date-range-picker__buttons\">\n      <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n      <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n    </div>\n  </div>\n</div>";
+      pickerTemplate = "<div ng-show=\"visible\" class=\"angular-date-range-picker__picker\" ng-click=\"handlePickerClick($event)\" ng-class=\"{'angular-date-range-picker--ranged': showRanged }\">\n  <div class=\"angular-date-range-picker__timesheet\">\n    <a ng-click=\"move(-1, $event)\" class=\"angular-date-range-picker__prev-month\">&#9664;</a>\n    <div bindonce ng-repeat=\"month in months\" class=\"angular-date-range-picker__month\">\n      <div class=\"angular-date-range-picker__month-name\" bo-text=\"month.name\"></div>\n      <table class=\"angular-date-range-picker__calendar\">\n        <tr>\n          <th bindonce ng-repeat=\"day in month.weeks[1]\" class=\"angular-date-range-picker__calendar-weekday\" bo-text=\"day.date.format('dd')\">\n          </th>\n        </tr>\n        <tr bindonce ng-repeat=\"week in month.weeks\">\n          <td\n              bo-class='{\n                \"angular-date-range-picker__calendar-day\": day,\n                \"angular-date-range-picker__calendar-day-selected-0\": day.selected[0],\n                \"angular-date-range-picker__calendar-day-selected-1\": day.selected[1],\n                \"angular-date-range-picker__calendar-day-disabled\": day.disabled,\n                \"angular-date-range-picker__calendar-day-start\": day.start\n              }'\n              ng-repeat=\"day in week track by $index\" ng-click=\"select(day, $event)\">\n              <div class=\"angular-date-range-picker__calendar-day-wrapper\" bo-text=\"day.date.date()\"></div>\n          </td>\n        </tr>\n      </table>\n    </div>\n    <a ng-click=\"move(+1, $event)\" class=\"angular-date-range-picker__next-month\">&#9654;</a>\n  </div>\n  <div class=\"angular-date-range-picker__panel\">\n    <div ng-show=\"showRanged\">\n      Select range: <select ng-click=\"prevent_select($event)\" ng-model=\"quick\" ng-options=\"e.range as e.label for e in quickList\"></select>\n    </div>\n    <input type=\"text\" id=\"datebox_0_start\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=0\" ng-blur=\"setDate($event,0,0)\" placeholder=\"YYYY-MM-DD\"/>\n    <input type=\"text\" id=\"datebox_0_end\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=0\" ng-blur=\"setDate($event,0,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n    <div ng-if=\"showCompare\">\n      <label class=\"angular-date-range-picker__comparelabel\">\n        <input type=\"checkbox\" ng-model=\"showcomp\" ng-true-value=\"1\" ng-false-value=\"0\" ng-change=\"flipCompare()\"/> Compare to...</label>\n      </label>\n      <div ng-show=\"showcomp\">\n        <input type=\"text\" id=\"datebox_1_start\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=1\" ng-blur=\"setDate($event,1,0)\" placeholder=\"YYYY-MM-DD\"/>\n        <input type=\"text\" id=\"datebox_1_end\" class=\"angular-date-range-picker__datebox\" ng-focus=\"cursel=1\" ng-blur=\"setDate($event,1,1)\" placeholder=\"YYYY-MM-DD\"/><br/>\n      </div>\n      <div class=\"angular-date-range-picker__buttons\">\n        <a ng-click=\"ok($event)\" class=\"angular-date-range-picker__apply\">Apply</a>\n        <a ng-click=\"hide($event)\" class=\"angular-date-range-picker__cancel\">cancel</a>\n      </div>\n    </div>\n  </div>\n</div>";
       CUSTOM = "CUSTOM";
       return {
         restrict: "AE",
         replace: true,
-        template: "<span tabindex=\"0\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"model && model.0\">{{ model.0.start.format(\"ll\") }} - {{ model.0.end.format(\"ll\") }}</span>\n    <span ng-hide=\"model && model.0\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"model && model.0\">{{ model.0.format(\"ll\") }}</span>\n    <span ng-hide=\"model && model.0\">Select date</span>\n  </span>\n</span>",
+        template: "<span tabindex=\"0\" class=\"angular-date-range-picker__input\">\n  <span ng-if=\"showRanged\">\n    <span ng-show=\"selection && selection.0\">{{ selection.0.start.format(\"ll\") }} - {{ selection.0.end.format(\"ll\") }}</span>\n    <span ng-hide=\"selection && selection.0\">Select date range</span>\n  </span>\n  <span ng-if=\"!showRanged\">\n    <span ng-show=\"selection && selection.0\">{{ selection.0.format(\"ll\") }}</span>\n    <span ng-hide=\"selection && selection.0\">Select date</span>\n  </span>\n</span>",
         scope: {
           model: "=ngModel",
           customSelectOptions: "=",
           ranged: "=",
+          compare: "=",
           pastDates: "@",
           noFutureDates: "@",
           callback: "&"
         },
         link: function($scope, element, attrs) {
-          var documentClickFn, domEl, _calculateRange, _checkQuickList, _getModel, _makeQuickList, _prepare;
+          var documentClickFn, domEl, _calculateRange, _checkQuickList, _getModel, _makeQuickList, _prepare, _setModelFromSelection, _setSelectionFromModel;
           $scope.quickListDefinitions = $scope.customSelectOptions;
           if ($scope.quickListDefinitions == null) {
             $scope.quickListDefinitions = [
@@ -105,6 +106,23 @@
               return $scope.model;
             }
           };
+          _setSelectionFromModel = function() {
+            if ($scope.showCompare) {
+              $scope.selection[0] = $scope.model[0];
+              return $scope.selection[1] = $scope.model[1];
+            } else {
+              return $scope.selection = [$scope.model];
+            }
+          };
+          _setModelFromSelection = function() {
+            if ($scope.showCompare) {
+              $scope.model = $scope.model || [];
+              $scope.model[0] = $scope.selection[0];
+              return $scope.model[1] = $scope.selection[1];
+            } else {
+              return $scope.model = $scope.selection[0];
+            }
+          };
           _makeQuickList = function(includeCustom) {
             var e, _i, _len, _ref, _results;
             if (includeCustom == null) {
@@ -131,6 +149,9 @@
           _calculateRange = function() {
             var end, model, start, totalSelection;
             if ($scope.showRanged) {
+              if (!$scope.selection || !$scope.selection[0]) {
+                _setSelectionFromModel();
+              }
               totalSelection = $scope.showCompare && $scope.selection && $scope.selection[1] ? moment().range(Math.min($scope.selection[0].start, $scope.selection[1].start), Math.max($scope.selection[0].end, $scope.selection[1].end)) : $scope.selection && $scope.selection[0] ? $scope.selection[0] : false;
               if ($scope.noFutureDates != null) {
                 return $scope.range = totalSelection ? (end = totalSelection.end.clone().endOf("month").startOf("day"), start = end.clone().subtract(2, "months").startOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(2, "month").startOf("day"), moment().endOf("month").startOf("day"));
@@ -199,7 +220,7 @@
                 }
               }
               if ($scope.noFutureDates != null) {
-                dis = dis || moment().diff(date, 'days') < 0;
+                dis = dis || moment().startOf('day').diff(date, 'days') < 0;
               }
               (_base = $scope.months)[m] || (_base[m] = {
                 name: date.format("MMMM YYYY"),
@@ -223,13 +244,7 @@
             return _checkQuickList();
           };
           $scope.show = function() {
-            if ($scope.showCompare) {
-              $scope.selection[0] = $scope.model[0];
-              $scope.selection[1] = $scope.model[1];
-            } else {
-              $scope.selection[0] = $scope.model;
-              $scope.selection[1] = void 0;
-            }
+            _setSelectionFromModel();
             _calculateRange();
             _prepare();
             return $scope.visible = true;
@@ -252,13 +267,7 @@
                 $event.stopPropagation();
               }
             }
-            $scope.model = $scope.model || [];
-            if ($scope.showCompare) {
-              $scope.model[0] = $scope.selection[0];
-              $scope.model[1] = $scope.selection[1];
-            } else {
-              $scope.model = $scope.selection[0];
-            }
+            _setModelFromSelection();
             $timeout(function() {
               if ($scope.callback) {
                 return $scope.callback();
