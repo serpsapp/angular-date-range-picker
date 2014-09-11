@@ -18,7 +18,7 @@
           ranged: "=",
           compare: "=",
           pastDates: "@",
-          noFutureDates: "@",
+          futureDates: "@",
           callback: "&"
         },
         link: function($scope, element, attrs) {
@@ -153,10 +153,10 @@
                 _setSelectionFromModel();
               }
               totalSelection = $scope.showCompare && $scope.selection && $scope.selection[1] ? moment().range(Math.min($scope.selection[0].start, $scope.selection[1].start), Math.max($scope.selection[0].end, $scope.selection[1].end)) : $scope.selection && $scope.selection[0] ? $scope.selection[0] : false;
-              if ($scope.noFutureDates != null) {
-                return $scope.range = totalSelection ? (end = totalSelection.end.clone().endOf("month").startOf("day"), start = end.clone().subtract(2, "months").startOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(2, "month").startOf("day"), moment().endOf("month").startOf("day"));
-              } else {
+              if (($scope.futureDates == null) || $scope.futureDates > 0) {
                 return $scope.range = $scope.selection && $scope.selection[0] ? (start = $scope.selection[0].start.clone().startOf("month").startOf("day"), end = start.clone().add(2, "months").endOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(1, "month").startOf("day"), moment().endOf("month").add(1, "month").startOf("day"));
+              } else {
+                return $scope.range = totalSelection ? (end = totalSelection.end.clone().endOf("month").startOf("day"), start = end.clone().subtract(2, "months").startOf("month").startOf("day"), moment().range(start, end)) : moment().range(moment().startOf("month").subtract(2, "month").startOf("day"), moment().endOf("month").startOf("day"));
               }
             } else {
               model = _getModel(0);
@@ -219,8 +219,8 @@
                   dis = moment().diff(date, 'days') > 0;
                 }
               }
-              if ($scope.noFutureDates != null) {
-                dis = dis || moment().startOf('day').diff(date, 'days') < 0;
+              if ($scope.futureDates != null) {
+                dis = dis || moment().startOf('day').add('days', $scope.futureDates).diff(date, 'days') < 0;
               }
               (_base = $scope.months)[m] || (_base[m] = {
                 name: date.format("MMMM YYYY"),

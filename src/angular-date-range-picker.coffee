@@ -75,7 +75,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
     ranged: "="
     compare: "="
     pastDates: "@"
-    noFutureDates: "@"
+    futureDates: "@"
     callback: "&"
 
   link: ($scope, element, attrs) ->
@@ -201,17 +201,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
         else
           false
 
-        if $scope.noFutureDates?
-          $scope.range = if totalSelection
-            end = totalSelection.end.clone().endOf("month").startOf("day")
-            start = end.clone().subtract(2, "months").startOf("month").startOf("day")
-            moment().range(start, end)
-          else
-            moment().range(
-              moment().startOf("month").subtract(2, "month").startOf("day"),
-              moment().endOf("month").startOf("day")
-            )
-        else
+        if !$scope.futureDates? || $scope.futureDates > 0
           $scope.range = if $scope.selection && $scope.selection[0]
             start = $scope.selection[0].start.clone().startOf("month").startOf("day")
             end = start.clone().add(2, "months").endOf("month").startOf("day")
@@ -221,7 +211,16 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
               moment().startOf("month").subtract(1, "month").startOf("day"),
               moment().endOf("month").add(1, "month").startOf("day")
             )
-
+        else
+          $scope.range = if totalSelection
+            end = totalSelection.end.clone().endOf("month").startOf("day")
+            start = end.clone().subtract(2, "months").startOf("month").startOf("day")
+            moment().range(start, end)
+          else
+            moment().range(
+              moment().startOf("month").subtract(2, "month").startOf("day"),
+              moment().endOf("month").startOf("day")
+            )
       else
         model = _getModel(0)
         $scope.selection[0] = false
@@ -271,8 +270,8 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           sel[0] = date.isSame($scope.selection[0])
           dis = moment().diff(date, 'days') > 0 if $scope.pastDates
 
-        if $scope.noFutureDates?
-          dis = dis || moment().startOf('day').diff(date, 'days') < 0
+        if $scope.futureDates?
+          dis = dis || moment().startOf('day').add('days',$scope.futureDates).diff(date, 'days') < 0
 
         $scope.months[m] ||= {name: date.format("MMMM YYYY"), weeks: []}
         $scope.months[m].weeks[w] ||= []
