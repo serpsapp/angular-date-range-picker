@@ -45,10 +45,10 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
           <input type="text" id="datebox_1_start" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,0)" placeholder="YYYY-MM-DD"/>
           <input type="text" id="datebox_1_end" class="angular-date-range-picker__datebox" ng-focus="cursel=1" ng-blur="setDate($event,1,1)" placeholder="YYYY-MM-DD"/><br/>
         </div>
-        <div class="angular-date-range-picker__buttons">
-          <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
-          <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
-        </div>
+      </div>
+      <div class="angular-date-range-picker__buttons">
+        <a ng-click="ok($event)" class="angular-date-range-picker__apply">Apply</a>
+        <a ng-click="hide($event)" class="angular-date-range-picker__cancel">cancel</a>
       </div>
     </div>
   </div>
@@ -67,6 +67,7 @@ angular.module("dateRangePicker").directive "dateRangePicker", ["$compile", "$ti
       <span ng-show="selection && selection.0">{{ selection.0.format("ll") }}</span>
       <span ng-hide="selection && selection.0">Select date</span>
     </span>
+    <span class="caret"></span>
   </span>
   """
   scope:
